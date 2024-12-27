@@ -66,6 +66,10 @@ void handleRoot() {
   html.replace("{{minuteOff}}", String(minuteOff));
   html.replace("{{secondOff}}", String(secondOff));
 
+  for (int i = 0; i < 8; i++) {
+    html.replace("{{relayState" + String(i) + "}}", relayStates[i] ? "on" : "off");
+  }
+
   server.send(200, "text/html", html);
 }
 
@@ -76,9 +80,10 @@ void handleToggleRelay() {
     relayStates[relay] = !relayStates[relay];
     digitalWrite(relayPins[relay], relayStates[relay] ? LOW : HIGH);  // Invertir el estado de los relés
     Serial.println("Relé " + String(relay) + " " + (relayStates[relay] ? "encendido" : "apagado"));
+    server.send(200, "text/plain", relayStates[relay] ? "on" : "off");
+  } else {
+    server.send(400, "text/plain", "Bad Request");
   }
-  server.sendHeader("Location", "/");
-  server.send(303);
 }
 
 // Maneja el encendido/apagado de todos los relés
@@ -90,9 +95,10 @@ void handleToggleAllRelays() {
       digitalWrite(relayPins[i], state ? LOW : HIGH);  // Invertir el estado de los relés
     }
     Serial.println(state ? "Todos los relés encendidos" : "Todos los relés apagados");
+    server.send(200, "text/plain", state ? "on" : "off");
+  } else {
+    server.send(400, "text/plain", "Bad Request");
   }
-  server.sendHeader("Location", "/");
-  server.send(303);
 }
 
 // Maneja la configuración de horarios
@@ -105,6 +111,16 @@ void handleSetTime() {
   if (server.hasArg("secondOff")) secondOff = server.arg("secondOff").toInt();
   server.sendHeader("Location", "/");
   server.send(303);
+}
+
+// Maneja la actualización del estado de los relés
+void handleGetRelayStates() {
+  String states = "";
+  for (int i = 0; i < 8; i++) {
+    states += relayStates[i] ? "on" : "off";
+    if (i < 7) states += ",";
+  }
+  server.send(200, "text/plain", states);
 }
 
 void setup() {
@@ -143,6 +159,7 @@ void setup() {
   server.on("/toggle", handleToggleRelay);
   server.on("/toggleAll", handleToggleAllRelays);
   server.on("/setTime", handleSetTime);
+  server.on("/getRelayStates", handleGetRelayStates);
   server.serveStatic("/background.jpg", SPIFFS, "/background.jpg");
   server.begin();
 }
