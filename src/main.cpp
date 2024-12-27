@@ -39,88 +39,34 @@ NTPClient timeClient(udp, "pool.ntp.org", -21600, 60000); // UTC -6, que equival
 float humidity = 0;
 float temperature = 0;
 
-// Página HTML con formulario para cambiar horarios
-String getHTML() {
-  String html = "<!DOCTYPE html><html lang='es'><head>";
-  html += "<meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1'>";  
-  html += "<title>Panel de Control luminaria Col. Vallejo</title>";
-  html += "<style>";
-  html += "body { font-family: Arial, sans-serif; color: #ffffff; text-align: center; padding: 20px; background-image: url('/background.jpg'); background-size: cover; background-position: center; background-repeat: repeat; height: 100vh; margin: 0; color: #333; }";
-  html += ".title-container, .content-container { background-color: rgba(128, 128, 128, 0.4); padding: 20px; border-radius: 5px; margin-bottom: 40px; color: #ffffff; }";
-  html += "h1 { color: #ffffff; margin: 0; }";
-  html += ".button-panel { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; justify-content: center; }";
-  html += "button { padding: 10px 30px; font-size: 18px; border: none; cursor: pointer; border-radius: 5px; transition: background-color 0.3s, transform 0.3s; opacity: 0.7; }";
-  html += "button:hover { transform: scale(1.05); opacity: 1; }";
-  html += ".on { background-color: green; color: white; }";
-  html += ".off { background-color: red; color: white; }";
-  html += ".form-container { margin-top: 40px; }";
-  html += "input { padding: 8px; font-size: 16px; margin: 5px; }";
-  html += ".button-container { display: flex; justify-content: space-between; margin-top: 40px; }";
-  html += ".button-container button { width: 45%; }";  // Hacer los botones más grandes y rectangulares
-  html += ".sensor-container { margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 20px; }";
-  html += ".sensor-container h3 { margin: 0; }";
-  html += ".end-container { margin-top: 40px; display: flex; justify-content: space-between; }";  // Botones de encender y apagar
-  html += "</style>";
-  html += "</head><body>";
-
-  html += "<div class='title-container'><h1>Panel de Control Focos Col. Vallejo</h1></div>";
-
-  // Mostrar la hora de CDMX en formato HH:mm:ss
-  html += "<div class='content-container'><h2>Hora actual: " + String(hour()) + ":" + String(minute()) + ":" + String(second()) + "</h2></div>";
-
-  html += "<div class='content-container button-panel'>";
-  for (int i = 0; i < 8; i++) {
-    html += "<button id='relay" + String(i) + "' class='" + (relayStates[i] ? "on" : "off") + "' onclick='toggleRelay(" + String(i) + ")'>Foco " + String(i + 1) + "</button>";
-  }
-  html += "</div>";
-
-  // Mostrar temperatura y humedad por encima de los botones de "Encender" y "Apagar"
-  html += "<div class='content-container sensor-container'>";
-  html += "<h3>Temperatura: " + String(temperature) + " &#8451;</h3>";
-  html += "<h3>Humedad: " + String(humidity) + " %</h3>";
-  html += "</div>";
-
-  // Configuración de horarios
-  html += "<div class='content-container form-container'>";
-  html += "<h2>Configurar Horarios de Encendido/Apagado</h2>";
-  html += "<form action='/setTime' method='get'>";
-  html += "<label>Hora Encendido:</label><input type='number' name='hourOn' value='" + String(hourOn) + "' min='0' max='23' required>";
-  html += "<label>Minuto Encendido:</label><input type='number' name='minuteOn' value='" + String(minuteOn) + "' min='0' max='59' required>";
-  html += "<label>Segundo Encendido:</label><input type='number' name='secondOn' value='" + String(secondOn) + "' min='0' max='59' required><br>";
-  html += "<label>Hora Apagado:</label><input type='number' name='hourOff' value='" + String(hourOff) + "' min='0' max='23' required>";
-  html += "<label>Minuto Apagado:</label><input type='number' name='minuteOff' value='" + String(minuteOff) + "' min='0' max='59' required>";
-  html += "<label>Segundo Apagado:</label><input type='number' name='secondOff' value='" + String(secondOff) + "' min='0' max='59' required><br>";
-  html += "<button type='submit'>Guardar</button>";
-  html += "</form>";
-  html += "</div>";
-
-  // Botones para encender y apagar todos los relés a los lados de los horarios
-  html += "<div class='content-container end-container'>";
-  html += "<button onclick='toggleAllRelays(true)' class='on'>Encender Todos</button>";
-  html += "<button onclick='toggleAllRelays(false)' class='off'>Apagar Todos</button>";
-  html += "</div>";
-
-  html += "<script>";
-  html += "function toggleRelay(relay) {";
-  html += "fetch('/toggle?relay=' + relay);";
-  html += "setTimeout(() => location.reload(), 500);";
-  html += "}";
-  
-  html += "function toggleAllRelays(state) {";
-  html += "fetch('/toggleAll?state=' + state);";
-  html += "setTimeout(() => location.reload(), 500);";
-  html += "}";
-  html += "</script>";
-
-  html += "</body></html>";
-  return html;
-}
-
 // Maneja la página principal
 void handleRoot() {
   temperature = dht.readTemperature();  // Leer temperatura
   humidity = dht.readHumidity();        // Leer humedad
-  server.send(200, "text/html", getHTML());
+
+  File file = SPIFFS.open("/index.html", "r");
+  if (!file) {
+    server.send(500, "text/plain", "File not found");
+    return;
+  }
+
+  String html = file.readString();
+  file.close();
+
+  // Reemplazar los marcadores de posición con los valores actuales
+  html.replace("{{hour}}", String(hour()));
+  html.replace("{{minute}}", String(minute()));
+  html.replace("{{second}}", String(second()));
+  html.replace("{{temperature}}", String(temperature));
+  html.replace("{{humidity}}", String(humidity));
+  html.replace("{{hourOn}}", String(hourOn));
+  html.replace("{{minuteOn}}", String(minuteOn));
+  html.replace("{{secondOn}}", String(secondOn));
+  html.replace("{{hourOff}}", String(hourOff));
+  html.replace("{{minuteOff}}", String(minuteOff));
+  html.replace("{{secondOff}}", String(secondOff));
+
+  server.send(200, "text/html", html);
 }
 
 // Maneja el encendido/apagado de relés
