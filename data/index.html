@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Panel de Control luminaria Col. Vallejo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #ffffff;
+            text-align: center;
+            padding: 20px;
+            background-image: url('/background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: repeat;
+            height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+        .title-container, .content-container {
+            background-color: rgba(128, 128, 128, 0.4);
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 40px;
+            color: #ffffff;
+        }
+        h1 {
+            color: #ffffff;
+            margin: 0;
+        }
+        .button-panel {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            justify-content: center;
+        }
+        button {
+            padding: 10px 30px;
+            font-size: 18px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s, transform 0.3s;
+            opacity: 0.7;
+        }
+        button:hover {
+            transform: scale(1.05);
+            opacity: 1;
+        }
+        .on {
+            background-color: green;
+            color: white;
+        }
+        .off {
+            background-color: red;
+            color: white;
+        }
+        .form-container {
+            margin-top: 40px;
+        }
+        input {
+            padding: 8px;
+            font-size: 16px;
+            margin: 5px;
+        }
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+        }
+        .button-container button {
+            width: 45%;
+        }
+        .sensor-container {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+        .sensor-container h3 {
+            margin: 0;
+        }
+        .end-container {
+            margin-top: 40px;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+
+    <div class='title-container'><h1>Panel de Control Focos Col. Vallejo</h1></div>
+
+    <div class='content-container'><h2>Hora actual: <span id="currentTime"></span></h2></div>
+
+    <div class='content-container button-panel'>
+        <script>
+            const relayStates = [false, false, false, false, false, false, false, false];
+            function updateRelayButtons() {
+                for (let i = 0; i < 8; i++) {
+                    document.getElementById('relay' + i).className = relayStates[i] ? 'on' : 'off';
+                }
+            }
+            function toggleRelay(relay) {
+                fetch('/toggle?relay=' + relay).then(updateRelayStates);
+            }
+            function toggleAllRelays(state) {
+                fetch('/toggleAll?state=' + state).then(updateRelayStates);
+            }
+            function updateRelayStates() {
+                fetch('/relayStates').then(response => response.json()).then(data => {
+                    relayStates.splice(0, relayStates.length, ...data);
+                    updateRelayButtons();
+                });
+            }
+            setInterval(() => {
+                const now = new Date();
+                document.getElementById('currentTime').innerText = now.toLocaleTimeString();
+            }, 1000);
+        </script>
+        <script>
+            for (let i = 0; i < 8; i++) {
+                document.write("<button id='relay" + i + "' class='" + (relayStates[i] ? "on" : "off") + "' onclick='toggleRelay(" + i + ")'>Foco " + (i + 1) + "</button>");
+            }
+        </script>
+    </div>
+
+    <div class='content-container sensor-container'>
+        <h3>Temperatura: <span id="temperature"></span> &#8451;</h3>
+        <h3>Humedad: <span id="humidity"></span> %</h3>
+    </div>
+
+    <div class='content-container form-container'>
+        <h2>Configurar Horarios de Encendido/Apagado</h2>
+        <form action='/setTime' method='get'>
+            <label>Hora Encendido:</label><input type='number' name='hourOn' min='0' max='23' required>
+            <label>Minuto Encendido:</label><input type='number' name='minuteOn' min='0' max='59' required>
+            <label>Segundo Encendido:</label><input type='number' name='secondOn' min='0' max='59' required><br>
+            <label>Hora Apagado:</label><input type='number' name='hourOff' min='0' max='23' required>
+            <label>Minuto Apagado:</label><input type='number' name='minuteOff' min='0' max='59' required>
+            <label>Segundo Apagado:</label><input type='number' name='secondOff' min='0' max='59' required><br>
+            <button type='submit'>Guardar</button>
+        </form>
+    </div>
+
+    <div class='content-container end-container'>
+        <button onclick='toggleAllRelays(true)' class='on'>Encender Todos</button>
+        <button onclick='toggleAllRelays(false)' class='off'>Apagar Todos</button>
+    </div>
+
+</body>
+</html>
