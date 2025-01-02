@@ -87,7 +87,7 @@
             justify-content: space-between;
         }
         .login-container {
-            background-color: rgba(128, 128, 128, 0.4);
+            background-color: rgba(0, 0, 255, 0.5);
             padding: 20px;
             border-radius: 5px;
             margin-top: 100px;
@@ -108,7 +108,7 @@
     <div id="control-panel" style="display: none;">
         <div class='title-container'><h1>Panel de Control Focos Col. Vallejo</h1></div>
 
-        <div class='content-container'><h2 id="current-time" class="time-display">Hora actual: {{hour}}:{{minute}}:{{second}} {{ampm}}</h2></div>
+        <div class='content-container'><h2 id="current-time" class="time-display">Dia: {{day}} {{hour}}:{{minute}}:{{second}} {{ampm}}</h2></div>
 
         <div class='content-container button-panel'>
             <button id='relay0' class='{{relayState0}}' onclick='toggleRelay(0)'>Ala derecha</button>
@@ -125,7 +125,7 @@
 
         <div class='content-container form-container'>
             <h2>Configurar Horarios de Encendido/Apagado</h2>
-            <form action='/setTime' method='get'>
+            <form id="set-time-form" action='/setTime' method='get'>
                 <label>Hora Encendido:</label><input type='number' name='hourOn' value='{{hourOn}}' min='0' max='23' required>
                 <label>Minuto Encendido:</label><input type='number' name='minuteOn' value='{{minuteOn}}' min='0' max='59' required>
                 <label>Segundo Encendido:</label><input type='number' name='secondOn' value='{{secondOn}}' min='0' max='59' required><br>
@@ -163,12 +163,15 @@
         document.getElementById('set-time-form').addEventListener('submit', function(event) {
             event.preventDefault();
             const formData = new FormData(event.target);
-            fetch('/setTime?' + new URLSearchParams(formData), {
-                method: 'GET'
+            fetch('/setTime', {
+                method: 'POST',
+                body: formData
             })
             .then(response => {
                 if (response.status === 200) {
                     alert('Horarios actualizados');
+                } else {
+                    alert('Error al actualizar los horarios');
                 }
             });
         });
@@ -183,7 +186,8 @@
 
         function toggleAllRelays(state) {
             fetch('/toggleAll?state=' + state)
-                .then(() => {
+                .then(response => response.text())
+                .then(data => {
                     const buttons = document.querySelectorAll('.button-panel button');
                     buttons.forEach(button => {
                         button.className = state ? 'on' : 'off';
@@ -193,15 +197,20 @@
 
         function updateTime() {
             const now = new Date();
+            const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            const day = days[now.getDay()];
             let hours = now.getHours();
             const minutes = now.getMinutes();
             const seconds = now.getSeconds();
             const ampm = hours >= 12 ? 'PM' : 'AM';
             hours = hours % 12;
             hours = hours ? hours : 12; // the hour '0' should be '12'
-            const strTime = hours + ':' + (minutes < 10 ? '0' + minutes : minutes) + ':' + (seconds < 10 ? '0' + seconds : seconds) + ' ' + ampm;
-            document.getElementById('current-time').innerHTML = 'Hora actual: ' + strTime;
+            const strTime = day + ' ' + hours + ':' + (minutes < 10 ? '0' + minutes : minutes) + ':' + (seconds < 10 ? '0' + seconds : seconds) + ' ' + ampm;
+            document.getElementById('current-time').innerHTML = ' ' + strTime;
         }
+
+        setInterval(updateTime, 1000); // Actualizar el reloj cada segundo
+        checkSession(); // Verificar la sesión al cargar la página
 
         function checkSession() {
             const cookies = document.cookie.split(';');
@@ -215,8 +224,7 @@
             }
         }
 
-        setInterval(updateTime, 1000); // Actualizar el reloj cada segundo
-        checkSession(); // Verificar la sesión al cargar la página
+        server.on("/setTime", HTTP_POST, handleSetTime);
     </script>
 </body>
 </html>
