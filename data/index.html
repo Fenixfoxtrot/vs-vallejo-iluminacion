@@ -10,7 +10,7 @@
             color: #ffffff;
             text-align: center;
             padding: 20px;
-            background-image: url('/background.jpg');
+            background-image: url('/background1.jpg'); /* Cambiado a background1.jpg */
             background-size: cover;
             background-position: center;
             background-repeat: repeat;
@@ -23,7 +23,6 @@
             padding: 20px;
             border-radius: 5px;
             margin-bottom: 40px;
-            color: #ffffff;
         }
         h1 {
             color: #ffffff;
@@ -87,45 +86,96 @@
             display: flex;
             justify-content: space-between;
         }
+        .login-container {
+            background-color: rgba(0, 0, 255, 0.5);
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 100px;
+            display: inline-block;
+        }
     </style>
 </head>
 <body>
-    <div class='title-container'><h1>Panel de Control Focos Col. Vallejo</h1></div>
-
-    <div class='content-container'><h2 id="current-time">Hora actual: {{hour}}:{{minute}}:{{second}} {{ampm}}</h2></div>
-
-    <div class='content-container button-panel'>
-        <button id='relay0' class='{{relayState0}}' onclick='toggleRelay(0)'>Ala derecha</button>
-        <button id='relay1' class='{{relayState1}}' onclick='toggleRelay(1)'>Ala izquierda</button>
-        <button id='relay2' class='{{relayState2}}' onclick='toggleRelay(2)'>Torre Alta</button>
-        <button id='relay3' class='{{relayState3}}' onclick='toggleRelay(3)'>Puente</button>
-        <button id='relay4' class='{{relayState4}}' onclick='toggleRelay(4)'>Torre Baja</button>
-    </div>
-
-    <div class='content-container sensor-container'>
-        <h3>Temperatura: {{temperature}} &#8451;</h3>
-        <h3>Humedad: {{humidity}} %</h3>
-    </div>
-
-    <div class='content-container form-container'>
-        <h2>Configurar Horarios de Encendido/Apagado</h2>
-        <form action='/setTime' method='get'>
-            <label>Hora Encendido:</label><input type='number' name='hourOn' value='{{hourOn}}' min='0' max='23' required>
-            <label>Minuto Encendido:</label><input type='number' name='minuteOn' value='{{minuteOn}}' min='0' max='59' required>
-            <label>Segundo Encendido:</label><input type='number' name='secondOn' value='{{secondOn}}' min='0' max='59' required><br>
-            <label>Hora Apagado:</label><input type='number' name='hourOff' value='{{hourOff}}' min='0' max='23' required>
-            <label>Minuto Apagado:</label><input type='number' name='minuteOff' value='{{minuteOff}}' min='0' max='59' required>
-            <label>Segundo Apagado:</label><input type='number' name='secondOff' value='{{secondOff}}' min='0' max='59' required><br>
-            <button type='submit'>Guardar</button>
+    <div id="login" class="login-container">
+        <h1>Login</h1>
+        <form id="login-form">
+            <input type="text" name="username" placeholder="Usuario" required><br>
+            <input type="password" name="password" placeholder="Contraseña" required><br>
+            <button type="submit">Iniciar Sesión</button>
         </form>
     </div>
 
-    <div class='content-container end-container'>
-        <button onclick='toggleAllRelays(true)' class='on'>Encender Todos</button>
-        <button onclick='toggleAllRelays(false)' class='off'>Apagar Todos</button>
+    <div id="control-panel" style="display: none;">
+        <div class='title-container'><h1>Panel de Control Focos Col. Vallejo</h1></div>
+
+        <div class='content-container'><h2 id="current-time" class="time-display">Dia: {{day}} {{hour}}:{{minute}}:{{second}} {{ampm}}</h2></div>
+
+        <div class='content-container button-panel'>
+            <button id='relay0' class='{{relayState0}}' onclick='toggleRelay(0)'>Ala derecha</button>
+            <button id='relay1' class='{{relayState1}}' onclick='toggleRelay(1)'>Ala izquierda</button>
+            <button id='relay2' class='{{relayState2}}' onclick='toggleRelay(2)'>Torre Alta</button>
+            <button id='relay3' class='{{relayState3}}' onclick='toggleRelay(3)'>Puente</button>
+            <button id='relay4' class='{{relayState4}}' onclick='toggleRelay(4)'>Torre Baja</button>
+        </div>
+
+        <div class='content-container sensor-container'>
+            <h3>Temperatura: {{temperature}} &#8451;</h3>
+            <h3>Humedad: {{humidity}} %</h3>
+        </div>
+
+        <div class='content-container form-container'>
+            <h2>Configurar Horarios de Encendido/Apagado</h2>
+            <form id="set-time-form" action='/setTime' method='get'>
+                <label>Hora Encendido:</label><input type='number' name='hourOn' value='{{hourOn}}' min='0' max='23' required>
+                <label>Minuto Encendido:</label><input type='number' name='minuteOn' value='{{minuteOn}}' min='0' max='59' required>
+                <label>Segundo Encendido:</label><input type='number' name='secondOn' value='{{secondOn}}' min='0' max='59' required><br>
+                <label>Hora Apagado:</label><input type='number' name='hourOff' value='{{hourOff}}' min='0' max='23' required>
+                <label>Minuto Apagado:</label><input type='number' name='minuteOff' value='{{minuteOff}}' min='0' max='59' required>
+                <label>Segundo Apagado:</label><input type='number' name='secondOff' value='{{secondOff}}' min='0' max='59' required><br>
+                <button type='submit'>Guardar</button>
+            </form>
+        </div>
+
+        <div class='content-container end-container'>
+            <button id="toggleAllOn" onclick='toggleAllRelays(true)' class='on'>Encender Todos</button>
+            <button id="toggleAllOff" onclick='toggleAllRelays(false)' class='off'>Apagar Todos</button>
+        </div>
     </div>
 
     <script>
+        document.getElementById('login-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            fetch('/login', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.status === 303) {
+                    window.location.href = '/';
+                } else if (response.status === 200) {
+                    document.getElementById('login').style.display = 'none';
+                    document.getElementById('control-panel').style.display = 'block';
+                }
+            });
+        });
+
+        document.getElementById('set-time-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            fetch('/setTime', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.status === 200) {
+                    alert('Horarios actualizados');
+                } else {
+                    alert('Error al actualizar los horarios');
+                }
+            });
+        });
+
         function toggleRelay(relay) {
             fetch('/toggle?relay=' + relay)
                 .then(response => response.text())
@@ -136,24 +186,45 @@
 
         function toggleAllRelays(state) {
             fetch('/toggleAll?state=' + state)
-                .then(() => {
-                    setTimeout(() => location.reload(), 500);
+                .then(response => response.text())
+                .then(data => {
+                    const buttons = document.querySelectorAll('.button-panel button');
+                    buttons.forEach(button => {
+                        button.className = state ? 'on' : 'off';
+                    });
                 });
         }
 
         function updateTime() {
             const now = new Date();
+            const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+            const day = days[now.getDay()];
             let hours = now.getHours();
             const minutes = now.getMinutes();
             const seconds = now.getSeconds();
             const ampm = hours >= 12 ? 'PM' : 'AM';
             hours = hours % 12;
             hours = hours ? hours : 12; // the hour '0' should be '12'
-            const strTime = hours + ':' + (minutes < 10 ? '0' + minutes : minutes) + ':' + (seconds < 10 ? '0' + seconds : seconds) + ' ' + ampm;
-            document.getElementById('current-time').innerHTML = 'Hora actual: ' + strTime;
+            const strTime = day + ' ' + hours + ':' + (minutes < 10 ? '0' + minutes : minutes) + ':' + (seconds < 10 ? '0' + seconds : seconds) + ' ' + ampm;
+            document.getElementById('current-time').innerHTML = ' ' + strTime;
         }
 
         setInterval(updateTime, 1000); // Actualizar el reloj cada segundo
+        checkSession(); // Verificar la sesión al cargar la página
+
+        function checkSession() {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.startsWith('session=')) {
+                    document.getElementById('login').style.display = 'none';
+                    document.getElementById('control-panel').style.display = 'block';
+                    return;
+                }
+            }
+        }
+
+        server.on("/setTime", HTTP_POST, handleSetTime);
     </script>
 </body>
 </html>

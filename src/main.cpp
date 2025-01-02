@@ -81,8 +81,6 @@ void handleToggleRelay() {
     digitalWrite(relayPins[relay], relayStates[relay] ? LOW : HIGH);  // Invertir el estado de los relés
     Serial.println("Relé " + String(relay) + " " + (relayStates[relay] ? "encendido" : "apagado"));
     server.send(200, "text/plain", relayStates[relay] ? "on" : "off");
-  } else {
-    server.send(400, "text/plain", "Bad Request");
   }
 }
 
@@ -101,7 +99,6 @@ void handleToggleAllRelays() {
   }
 }
 
-// Maneja la configuración de horarios
 void handleSetTime() {
   if (server.hasArg("hourOn")) hourOn = server.arg("hourOn").toInt();
   if (server.hasArg("minuteOn")) minuteOn = server.arg("minuteOn").toInt();
@@ -121,6 +118,22 @@ void handleGetRelayStates() {
     if (i < 7) states += ",";
   }
   server.send(200, "text/plain", states);
+}
+
+// Maneja la página de inicio de sesión
+void handleLogin() {
+  if (server.hasArg("username") && server.hasArg("password")) {
+    String username = server.arg("username");
+    String password = server.arg("password");
+    if (username == "Fenix Foxtrot" && password == "Fenix Foxtrot 11") {
+      server.sendHeader("Location", "/");
+      server.send(303);
+    } else {
+      server.send(401, "text/plain", "Unauthorized");
+    }
+  } else {
+    server.send(400, "text/plain", "Bad Request");
+  }
 }
 
 void setup() {
@@ -160,7 +173,9 @@ void setup() {
   server.on("/toggleAll", handleToggleAllRelays);
   server.on("/setTime", handleSetTime);
   server.on("/getRelayStates", handleGetRelayStates);
-  server.serveStatic("/background.jpg", SPIFFS, "/background.jpg");
+  server.on("/login", HTTP_POST, handleLogin);
+  server.serveStatic("/background1.jpg", SPIFFS, "/background1.jpg");
+  server.serveStatic("/index.html", SPIFFS, "/index.html");
   server.begin();
 }
 
