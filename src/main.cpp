@@ -9,8 +9,8 @@
 
 #define DHTPIN A0     // Pin donde está conectado el sensor DHT11
 #define DHTTYPE DHT11 // Tipo de sensor (DHT11)
-
 DHT dht(DHTPIN, DHTTYPE);  // Instancia del sensor DHT
+
 
 // Configuración del servidor web
 ESP8266WebServer server(80);
@@ -28,8 +28,8 @@ int minuteOff = 0;  // Minuto de apagado por defecto
 int secondOff = 0;  // Segundo de apagado por defecto
 
 // Credenciales Wi-Fi
-const char* ssid = "INFINITUM1ABB";       // Cambia por tu SSID
-const char* password = "ecykj4tDxu"; // Cambia por tu contraseña
+const char* ssid = "xxxxx";       // Cambia por tu SSID
+const char* password = "xxxx"; // Cambia por tu contraseña
 
 // Configuración de NTP para sincronización horaria (hora estándar de la Ciudad de México: UTC -6)
 WiFiUDP udp;
