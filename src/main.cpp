@@ -7,7 +7,7 @@
 #include <DHT.h>
 #include <FS.h>
 
-#define DHTPIN 10     // Pin donde está conectado el sensor DHT11
+#define DHTPIN A0     // Pin donde está conectado el sensor DHT11
 #define DHTTYPE DHT11 // Tipo de sensor (DHT11)
 
 DHT dht(DHTPIN, DHTTYPE);  // Instancia del sensor DHT
@@ -16,8 +16,8 @@ DHT dht(DHTPIN, DHTTYPE);  // Instancia del sensor DHT
 ESP8266WebServer server(80);
 
 // Pines de los relés
-const int relayPins[] = {16, 5, 4, 2, 14, 12, 13, 15}; // GPIO16, GPIO5, GPIO4, etc.
-bool relayStates[8] = {false, false, false, false, false, false, false, false}; // Estados iniciales de los relés
+const int relayPins[] = {16, 5, 4, 3, 14, 12, 13, 10, 15}; // GPIO16, GPIO5, GPIO4, etc.
+bool relayStates[9] = {false, false, false, false, false, false, false, false, false}; // Estados iniciales de los relés
 
 // Variables para manejar la hora de encendido y apagado (hora, minuto, segundo)
 int hourOn = 6;     // Hora de encendido por defecto (6:00 AM)
@@ -66,7 +66,7 @@ void handleRoot() {
   html.replace("{{minuteOff}}", String(minuteOff));
   html.replace("{{secondOff}}", String(secondOff));
 
-  for (int i = 0; i < 8; i++) {
+  for (int i = 0; i < 9; i++) {
     html.replace("{{relayState" + String(i) + "}}", relayStates[i] ? "on" : "off");
   }
 
@@ -78,7 +78,7 @@ void handleToggleRelay() {
   if (server.hasArg("relay")) {
     int relay = server.arg("relay").toInt();
     relayStates[relay] = !relayStates[relay];
-    digitalWrite(relayPins[relay], relayStates[relay] ? LOW : HIGH);  // Invertir el estado de los relés
+    digitalWrite(relayPins[relay], relayStates[relay] ? HIGH : LOW);  // Invertir el estado de los relés
     Serial.println("Relé " + String(relay) + " " + (relayStates[relay] ? "encendido" : "apagado"));
     server.send(200, "text/plain", relayStates[relay] ? "on" : "off");
   }
@@ -88,9 +88,9 @@ void handleToggleRelay() {
 void handleToggleAllRelays() {
   if (server.hasArg("state")) {
     bool state = server.arg("state") == "true";
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 9; i++) {
       relayStates[i] = state;
-      digitalWrite(relayPins[i], state ? LOW : HIGH);  // Invertir el estado de los relés
+      digitalWrite(relayPins[i], state ? HIGH : LOW);  // Invertir el estado de los relés
     }
     Serial.println(state ? "Todos los relés encendidos" : "Todos los relés apagados");
     server.send(200, "text/plain", state ? "on" : "off");
@@ -113,7 +113,7 @@ void handleSetTime() {
 // Maneja la actualización del estado de los relés
 void handleGetRelayStates() {
   String states = "";
-  for (int i = 0; i < 8; i++) {
+  for (int i = 0; i < 9; i++) {
     states += relayStates[i] ? "on" : "off";
     if (i < 7) states += ",";
   }
@@ -162,9 +162,9 @@ void setup() {
   timeClient.begin();
 
   // Configurar los pines de los relés como salidas
-  for (int i = 0; i < 8; i++) {
+  for (int i = 0; i < 9; i++) {
     pinMode(relayPins[i], OUTPUT);
-    digitalWrite(relayPins[i], HIGH);  // Relés apagados por defecto (suponiendo que son activos bajos)
+    digitalWrite(relayPins[i], LOW);  // Relés apagados por defecto (suponiendo que son activos bajos)
   }
 
   // Inicializar servidor web
@@ -190,18 +190,18 @@ void loop() {
 
   // Encender los relés si la hora actual coincide con la hora de encendido
   if (currentHour == hourOn && currentMinute == minuteOn && currentSecond == secondOn) {
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 9; i++) {
       relayStates[i] = true;
-      digitalWrite(relayPins[i], LOW); // Enciende todos los relés
+      digitalWrite(relayPins[i], HIGH); // Enciende todos los relés
     }
     Serial.println("Todos los relés encendidos");
   }
 
   // Apagar los relés si la hora actual coincide con la hora de apagado
   if (currentHour == hourOff && currentMinute == minuteOff && currentSecond == secondOff) {
-    for (int i = 0; i < 8; i++) {
+    for (int i = 0; i < 9; i++) {
       relayStates[i] = false;
-      digitalWrite(relayPins[i], HIGH); // Apaga todos los relés
+      digitalWrite(relayPins[i], LOW); // Apaga todos los relés
     }
     Serial.println("Todos los relés apagados");
   }
