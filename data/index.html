@@ -29,11 +29,13 @@
             margin: 0;
         }
         .button-panel {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            justify-content: center;
-        }
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Dos columnas */
+    grid-template-rows: repeat(2, auto); /* Dos filas */
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+}
         button {
             padding: 10px 30px;
             font-size: 18px;
@@ -93,6 +95,10 @@
             margin-top: 100px;
             display: inline-block;
         }
+        .content-container h2 {
+            text-align: center;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -110,17 +116,34 @@
 
         <div class='content-container'><h2 id="current-time" class="time-display">Dia: {{day}} {{hour}}:{{minute}}:{{second}} {{ampm}}</h2></div>
 
-        <div class='content-container button-panel'>
-            <button id='relay0' class='{{relayState0}}' onclick='toggleRelay(0)'>Ala derecha</button>
-            <button id='relay1' class='{{relayState1}}' onclick='toggleRelay(1)'>Ala izquierda</button>
-            <button id='relay2' class='{{relayState2}}' onclick='toggleRelay(2)'>Torre Alta</button>
-            <button id='relay3' class='{{relayState3}}' onclick='toggleRelay(3)'>Puente</button>
-            <button id='relay4' class='{{relayState4}}' onclick='toggleRelay(4)'>Torre Baja</button>
-            <button id='relay5' class='{{relayState5}}' onclick='toggleRelay(5)'>Ala izquierda</button>
-            <button id='relay6' class='{{relayState6}}' onclick='toggleRelay(6)'>Torre Alta</button>
-            <button id='relay7' class='{{relayState7}}' onclick='toggleRelay(7)'>Puente</button>
-            <button id='relay8' class='{{relayState8}}' onclick='toggleRelay(8)'>Torre Baja</button>
-        </div>
+    <!-- Contenedor Adolescentes -->
+    <div class='content-container button-panel'>
+        <h2>Adolescentes</h2>
+        <button id='relay1' class='{{relayState1}}' onclick='toggleRelay(1)'>Entrada</button>
+        <button id='relay8' class='{{relayState8}}' onclick='toggleRelay(8)'>Ministerio</button>
+        <button id='relay2' class='{{relayState2}}' onclick='toggleRelay(2)'>Coro</button>
+    </div>
+
+    <!-- Contenedor Flores -->
+    <div class='content-container button-panel'>
+        <h2>Flores</h2>
+        <button id='relay4' class='{{relayState4}}' onclick='toggleRelay(4)'>Flores</button>
+    </div>
+
+    <!-- Contenedor Jóvenes -->
+    <div class='content-container button-panel'>
+        <h2>Jóvenes</h2>
+        <button id='relay6' class='{{relayState6}}' onclick='toggleRelay(6)'>Carcamo</button>
+    </div>
+
+    <!-- Contenedor Luces Esporádicas -->
+    <div class='content-container button-panel'>
+        <h2>Luces Esporádicas</h2>
+        <button id='relay0' class='{{relayState0}}' onclick='toggleRelay(0)'>Comedor VDD</button>
+        <button id='relay3' class='{{relayState3}}' onclick='toggleRelay(3)'>Cajillo Hna's</button>
+        <button id='relay7' class='{{relayState7}}' onclick='toggleRelay(7)'>Luminaria Hna's T</button>
+        <button id='relay5' class='{{relayState5}}' onclick='toggleRelay(5)'>Cajillo Centro VDD</button>
+    </div>
 
         <div class='content-container sensor-container'>
             <h3>Temperatura: {{temperature}} &#8451;</h3>

@@ -7,10 +7,10 @@
 #include <DHT.h>
 #include <FS.h>
 
+#define RESET_INTERVAL 7200000  // Tiempo en milisegundos (1 minuto)
 #define DHTPIN A0     // Pin donde está conectado el sensor DHT11
 #define DHTTYPE DHT11 // Tipo de sensor (DHT11)
 DHT dht(DHTPIN, DHTTYPE);  // Instancia del sensor DHT
-
 
 // Configuración del servidor web
 ESP8266WebServer server(80);
@@ -20,16 +20,22 @@ const int relayPins[] = {16, 5, 4, 3, 14, 12, 13, 10, 15}; // GPIO16, GPIO5, GPI
 bool relayStates[9] = {false, false, false, false, false, false, false, false, false}; // Estados iniciales de los relés
 
 // Variables para manejar la hora de encendido y apagado (hora, minuto, segundo)
-int hourOn = 6;     // Hora de encendido por defecto (6:00 AM)
-int minuteOn = 0;   // Minuto de encendido por defecto
+int hourOn = 18;     // Hora de encendido por defecto (6:48 PM)
+int minuteOn = 40;   // Minuto de encendido por defecto
 int secondOn = 0;   // Segundo de encendido por defecto
-int hourOff = 22;   // Hora de apagado por defecto (10:00 PM)
-int minuteOff = 0;  // Minuto de apagado por defecto
+int hourOff = 21;   // Hora de apagado por defecto (10:00 PM)
+int minuteOff = 50;  // Minuto de apagado por defecto
 int secondOff = 0;  // Segundo de apagado por defecto
 
 // Credenciales Wi-Fi
-const char* ssid = "xxxxx";       // Cambia por tu SSID
-const char* password = "xxxx"; // Cambia por tu contraseña
+const char* ssid = "xxxxxxx";       // Cambia por tu SSID
+const char* password = "xxxxxxxxx"; // Cambia por tu contraseña
+// Dirección IP estática
+IPAddress staticIP(192, 168, 100, 300);  // Cambia a la IP que desees usar
+IPAddress gateway(192, 168, 100, 1);     // IP de tu router
+IPAddress subnet(255, 255, 255, 0);    // Máscara de subred
+IPAddress dns1(8, 8, 8, 8);            // DNS primario (Google DNS) 
+IPAddress dns2(8, 8, 4, 4);            // DNS secundario (Google DNS)*/
 
 // Configuración de NTP para sincronización horaria (hora estándar de la Ciudad de México: UTC -6)
 WiFiUDP udp;
@@ -52,6 +58,9 @@ void handleRoot() {
 
   String html = file.readString();
   file.close();
+
+// Obtener la dirección MAC
+  String macAddress = WiFi.macAddress();
 
   // Reemplazar los marcadores de posición con los valores actuales
   html.replace("{{hour}}", String(hour()));
@@ -148,8 +157,9 @@ void setup() {
 
   // Conexión Wi-Fi
   WiFi.begin(ssid, password);
+  WiFi.config(staticIP, gateway, subnet, dns1, dns2); // Configurar IP estática
   while (WiFi.status() != WL_CONNECTED) {
-    delay(1000);
+    delay(500);
     Serial.print(".");
   }
   Serial.println("Conectado a Wi-Fi");
@@ -180,6 +190,12 @@ void setup() {
 }
 
 void loop() {
+  static unsigned long lastReset = millis();
+
+  if (millis() - lastReset >= RESET_INTERVAL) {
+      Serial.println("Reiniciando ESP...");
+      ESP.restart();
+  }
   timeClient.update();  // Actualizar la hora desde el NTP
   setTime(timeClient.getEpochTime()); // Establecer la hora en TimeLib
 
